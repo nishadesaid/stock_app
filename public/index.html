@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stock Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Stock Chat</h1>
+    <form id="stockForm">
+      <input
+        id="company_name"
+        type="text"
+        placeholder="Enter company name"
+        required
+      />
+      <button id="submit" type="submit">Fetch Stock Price</button>
+    </form>
+    <ul id="messages"></ul>
+
+    <script>
+      const socket = io();
+
+      // Handle stock price response
+      socket.on("stock", (data) => {
+        console.log("data in index", data);
+        const { company_name, price, fetch_time } = data;
+        const fetch_time_ = new Date(fetch_time).toLocaleString();
+        const message = `${company_name}: $${price} (Fetched at: ${fetch_time_})`;
+        displayMessage(message);
+      });
+
+      // Handle error response
+      socket.on("error", (message) => {
+        displayMessage(`Error: ${message}`);
+      });
+
+      // Fetch stock price on button click
+      document.getElementById("stockForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        console.log("clicking...");
+        const company_name = document.getElementById("company_name").value;
+        console.log(company_name);
+        socket.emit("stock", company_name);
+      });
+
+      // Display message in the chat interface
+      function displayMessage(message) {
+        const ul = document.getElementById("messages");
+        ul.innerHTML = "";
+        const li = document.createElement("li");
+
+        li.textContent = message;
+        document.getElementById("messages").appendChild(li);
+      }
+
+      setInterval(() => {
+        const company_name = document.getElementById("company_name").value;
+        if (company_name.trim() !== "") {
+          socket.emit("stock", company_name);
+        }
+      }, 20000);
+    </script>
+  </body>
+</html>
